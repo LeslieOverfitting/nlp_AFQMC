@@ -15,5 +15,5 @@ class SentenceDataSet(Dataset):
         if self.labels is None:
             return self.sentences1[index], self.sentences2[index]
         else:
-            return self.sentences1[index], self.sentences2[index], labels[index]
+            return self.sentences1[index], self.sentences2[index], self.labels[index]
 

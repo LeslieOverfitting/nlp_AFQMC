@@ -8,7 +8,9 @@ class Config:
         self.padding_idx = 0
         self.batch_size = 32
         self.hidden_size = 200
-
+        self.max_len = 35
+        self.epoch_num = 10
+        self.learn_rate = 1e-4
         # file path
         self.emb_path = 'pretrainEmb/sgns.zhihu.bigram-char'
         self.train_data_path = 'data/train.csv'

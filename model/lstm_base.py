@@ -21,7 +21,7 @@ class LSTMBase(nn.Module):
                                              bias=True, 
                                              dropout=self.dropout)
         self.predict_fc = nn.Sequential(nn.Dropout(p=self.dropout),
-                                            nn.Linear(2 * 2 * self.hidden_size, self.hidden_size),
+                                            nn.Linear(3 * 2 * self.hidden_size, self.hidden_size),
                                             nn.Tanh(),
                                             nn.Dropout(p=self.dropout),
                                             nn.Linear(self.hidden_size, self.n_classes)
@@ -39,13 +39,13 @@ class LSTMBase(nn.Module):
         sentences1_len = torch.sum(sentences1_mask, dim=-1).view(-1)# [batch_size]
         sentences2_len = torch.sum(sentences2_mask, dim=-1).view(-1)# [batch_size]
         encoded_sentences1 = self.encoder_layer(embedded_sentences1, sentences1_len)
-        encoded_sentences2 = self.encoder_layer(embedded_sentences2, sentences1_len)
+        encoded_sentences2 = self.encoder_layer(embedded_sentences2, sentences2_len)
         
         sentences1_len = sentences1_len.view(-1, 1) # [batch_size, 1]
         sentences2_len = sentences2_len.view(-1, 1) # [batch_size, 1]
 
-        sentences1_mean = torch.sum(embedded_sentences1, dim=1) / sentences1_len # [batch_size, dim] / [batch_size, 1]
-        sentences2_mean = torch.sum(embedded_sentences2, dim=1) / sentences2_len
+        sentences1_mean = torch.sum(encoded_sentences1, dim=1) / sentences1_len # [batch_size, dim] / [batch_size, 1]
+        sentences2_mean = torch.sum(encoded_sentences2, dim=1) / sentences2_len
         # [s1_mean; s2_mean; s1_mean - s2_mean]
         cat = torch.cat([sentences1_mean, sentences2_mean, sentences1_mean - sentences2_mean], dim=1)
         return self.predict_fc(cat)

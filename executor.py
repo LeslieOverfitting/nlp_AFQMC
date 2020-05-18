@@ -18,21 +18,24 @@ class Executor:
         start_time = time.time()
         optimizer = optim.Adam(model.parameters(), lr=self.config.learn_rate)
         model.train()
+        criterion = nn.CrossEntropyLoss()
         total_batch = 0
         for data_batch in data_loader:
             total_batch += 1
-            sentences1, sentences2, labels  = data_batch
+            sentences1 = data_batch[0]
+            sentences1 = data_batch[1]
+            labels = data_batch[2]
             if torch.cuda.is_available():
-                sentences1 = sentences1.to(torch.device('cuda'))
-                sentences2 = sentences2.to(torch.device('cuda'))
-                label_ids = label_ids.to(torch.device('cuda'))
+                sentences1 = data_batch[0].clone().detach().to(self.config.device)
+                sentences2 = data_batch[1].clone().detach().to(self.config.device)
+                labels = data_batch[2].clone().detach().to(self.config.device)
             model.zero_grad()
             outputs = model(sentences1, sentences2)
-            loss = F.cross_entropy(outputs, labels)
+            loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
 
-            if total_batch % 1000 == 0:
+            if total_batch % 500 == 0:
                 true_label = labels.data.cpu()
                 predict = torch.max(outputs, dim=1)[1].cpu().numpy()
                 train_acc = metrics.accuracy_score(true_label, predict)
@@ -47,15 +50,18 @@ class Executor:
         total_loss = 0
         predicts_all = np.array([], dtype=int)
         labels_all = np.array([], dtype=int)
+        criterion = nn.CrossEntropyLoss()
         with torch.no_grad():
             for data_batch in data_loader:
-                sentences1, sentences2, labels  = data_batch
+                sentences1 = data_batch[0]
+                sentences1 = data_batch[1]
+                labels = data_batch[2]
                 if torch.cuda.is_available():
-                    sentences1 = sentences1.to(torch.device('cuda'))
-                    sentences2 = sentences2.to(torch.device('cuda'))
-                    label_ids = label_ids.to(torch.device('cuda'))
+                    sentences1 = data_batch[0].clone().detach().to(self.config.device)
+                    sentences2 = data_batch[1].clone().detach().to(self.config.device)
+                    labels = data_batch[2].clone().detach().to(self.config.device)
                 outputs = model(sentences1, sentences2)
-                loss = F.cross_entropy(outputs, labels)
+                loss = criterion(outputs, labels)
                 total_loss += loss.item()
 
                 predict = torch.max(outputs, dim=1)[1].cpu().numpy()
