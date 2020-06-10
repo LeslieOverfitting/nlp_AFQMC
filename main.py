@@ -5,7 +5,9 @@ from sentence_dataSet import SentenceDataSet
 from data_processor import DataProcessor
 from executor import Executor
 from model.lstm_base import LSTMBase
-from model.lstm_base_test import LSTMBaseTest
+from model.esim import ESIM
+from model.sse import SSE
+from model.inferSent import InferSent
 from config import Config
 import pandas as pd
 import torch
@@ -22,7 +24,7 @@ def train(config, data_processor, executor):
     dev_loader = DataLoader(dev_data_set, batch_size=config.batch_size, shuffle=True)
 
     # 加载模型
-    model = LSTMBaseTest(config, data_processor.emb_matrix)
+    model = SSE(config, data_processor.emb_matrix)
     print(model)
     total_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(str(total_trainable_params), 'parameters is trainable.')
@@ -51,3 +53,10 @@ def test(config,  data_processor, executor):
     #model
     test_acc, test_loss, report, confusion = executor.evaluate_model(test_loader, model)
     print_ans(test_acc, test_loss, report, confusion)
+
+
+if __name__ =='__main__':
+    config = Config()
+    data_processor = DataProcessor(config)
+    executor = Executor(config)
+    train(config, data_processor, executor)

@@ -22,10 +22,11 @@ class SentenceEncoder(nn.Module):
         )
 
     def forward(self, sequences_batch, sequnces_lengths):
+        max_len = sequences_batch.shape[1]
         sorted_batch, sorted_length, _, restoration_idx = sort_by_seq_lens(sequences_batch, sequnces_lengths)
         packed_batch = nn.utils.rnn.pack_padded_sequence(sorted_batch, sorted_length, batch_first=True)
         outputs, _ = self._encoder(packed_batch) # hidden = None
-        outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True) # [batch_size, max_len, dim]
+        outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True, total_length=max_len) # [batch_size, max_len, dim]
         # restore order
         reorder_outputs = outputs.index_select(0, restoration_idx)
         return reorder_outputs

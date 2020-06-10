@@ -11,7 +11,8 @@ class DataProcessor:
         emb, dict_len, emb_dim = self.get_emb(config.emb_path)
         self.tokenizer = Tokenizer(emb.keys())
         self.dict_len = dict_len + 2 # pad unk
-        self.emb_matrix = self.get_emb_matrix(emb, self.tokenizer, dict_len, emb_dim) # key index value word_emb
+        config.n_vocab = self.dict_len
+        self.emb_matrix = self.get_emb_matrix(emb, self.tokenizer, self.dict_len , emb_dim) # key index value word_emb
         
     def get_dataset(self, df, is_train=True):
         # 将语句字符串 转化为 index
@@ -27,27 +28,26 @@ class DataProcessor:
     def get_emb(self, emb_path):
         with open(emb_path, 'r', encoding='utf-8') as emb_file:
             dict_len, emb_dim = emb_file.readline().rstrip().split()
-            print('dict_len: ', dict_len)
-            print('emb dim:', emb_dim)
-            dict_len, emb_dim = int(dict_len), int(emb_dim)
+            emb_dim = int(emb_dim)
             emb = collections.OrderedDict()
             for line in emb_file.readlines():
                 tokens = line.rstrip().split()
                 if len(tokens) == 301:
                     emb[tokens[0]] = np.asarray(tokens[1:], dtype='float32')
-        return emb, dict_len, emb_dim
+            print(len(emb))
+        return emb, len(emb), emb_dim
 
     
     def get_emb_matrix(self, emb, tokenizer, dict_len, emb_dim):
         '''
             input: 
-                    emb 词向量矩阵 list
+                    emb 词向量矩阵 dict
                     dict_len 词数量
                     emb_dim 词向量维度
             return:  
                     emb_matrix: key index value word_emb
         '''
-        emb_matrix = np.random.randn(2 + dict_len, emb_dim).astype('float32')
+        emb_matrix = np.random.randn(dict_len, emb_dim).astype('float32')
         for word, idx in tokenizer.vocab.items():
             emb_vector = emb.get(word)
             if emb_vector is not None:
@@ -55,7 +55,7 @@ class DataProcessor:
         return emb_matrix
     
     def convert_sentence_to_index(self, sentence):
-        tokens_list = jieba.cut(sentence) # 利用结巴分词对语句进行切词
+        tokens_list = list(jieba.cut(sentence)) # 利用结巴分词对语句进行切词
         ids_index = self.tokenizer.tokens_to_id(tokens_list)# 将字词转化为对应的词向量下标
         # padding 对未达到 max_len 的序列进行填充
         ids_index = ids_index[:self.config.max_len] +  max(self.config.max_len - len(ids_index), 0) * [0]

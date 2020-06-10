@@ -15,8 +15,8 @@ class LSTMBase(nn.Module):
         self.emb = nn.Embedding.from_pretrained(torch.tensor(word_emb))
         self.emb_dim = self.emb.embedding_dim
         # lstm
-        self.encoder_layer = SentenceEncoder(self.emb_dim, 
-                                             self.hidden_size, 
+        self.encoder_layer = SentenceEncoder(input_size=self.emb_dim, 
+                                             hidden_size=self.hidden_size, 
                                              num_layers=self.hidden_layer, 
                                              bias=True, 
                                              dropout=self.dropout)

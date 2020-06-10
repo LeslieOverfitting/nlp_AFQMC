@@ -5,7 +5,6 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from sklearn import metrics
 import numpy as np
-import sklearn.feature_extraction.tests.test_image
 import time
 from utils import get_time_diff
 
@@ -23,20 +22,20 @@ class Executor:
         for data_batch in data_loader:
             total_batch += 1
             sentences1 = data_batch[0]
-            sentences1 = data_batch[1]
+            sentences2 = data_batch[1]
             labels = data_batch[2]
             if torch.cuda.is_available():
-                sentences1 = data_batch[0].clone().detach().to(self.config.device)
-                sentences2 = data_batch[1].clone().detach().to(self.config.device)
-                labels = data_batch[2].clone().detach().to(self.config.device)
-            model.zero_grad()
+                sentences1 = data_batch[0].to(self.config.device)
+                sentences2 = data_batch[1].to(self.config.device)
+                labels = data_batch[2].to(self.config.device)
+            optimizer.zero_grad()
             outputs = model(sentences1, sentences2)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
 
-            if total_batch % 500 == 0:
-                true_label = labels.data.cpu()
+            if total_batch % 100 == 0:
+                true_label = labels.data.cpu().numpy()
                 predict = torch.max(outputs, dim=1)[1].cpu().numpy()
                 train_acc = metrics.accuracy_score(true_label, predict)
                 time_diff = get_time_diff(start_time)
@@ -54,12 +53,12 @@ class Executor:
         with torch.no_grad():
             for data_batch in data_loader:
                 sentences1 = data_batch[0]
-                sentences1 = data_batch[1]
+                sentences2 = data_batch[1]
                 labels = data_batch[2]
                 if torch.cuda.is_available():
-                    sentences1 = data_batch[0].clone().detach().to(self.config.device)
-                    sentences2 = data_batch[1].clone().detach().to(self.config.device)
-                    labels = data_batch[2].clone().detach().to(self.config.device)
+                    sentences1 = data_batch[0].to(self.config.device)
+                    sentences2 = data_batch[1].to(self.config.device)
+                    labels = data_batch[2].to(self.config.device)
                 outputs = model(sentences1, sentences2)
                 loss = criterion(outputs, labels)
                 total_loss += loss.item()

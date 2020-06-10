@@ -46,6 +46,42 @@ def sort_by_seq_lens(batch, sequences_lengths, descending=True):
     restoration_index = idx_range.index_select(0, reverse_mapping)
     return sorted_batch, sorted_seq_lens, sorting_index, restoration_index
 
+def masked_softmax(tensor, mask):
+    """
+        tesor [batch_size, q1_max_len, q2_max_len]
+        mask [batch_size, len]
+    """
+    tensor_shape = tensor.size()
+    reshaped_tensor = tensor.view(-1, tensor_shape[-1]) #[batch_size * q1_max_len, q2_maxlen]
+    while mask.dim() < tensor.dim():
+        mask = mask.unsqueeze(1) # [batch_size, 1, q2_max_len]
+    mask = mask.expand_as(tensor).contiguous().float() # [batch_size, q1_max_len, q2_max_len]
+    reshape_mask = mask.view(-1, mask.size()[-1]) # [batch_size * q1_max_len, q2_max_len]
+    result = nn.functional.softmax(reshaped_tensor * reshape_mask, dim=-1) # [batch_size * q1_max_len, q2_max_len]
+    result = result * reshape_mask
+    result = result / result.sum(dim=-1, keepdim=True) + 1e-13
+    return result.view(*tensor_shape)
+
+def weighted_sum(tensor, weights, mask):
+    """
+        for q2
+        tensor [batch_size, q2_len, dim]
+        weights [batch_size, q1_len, q2_len]
+        mask [batch_size, q1_len]
+    """
+    weighted_sum = weights.bmm(tensor) # [batch_size, q1_len, dim]
+    while mask.dim() < weighted_sum.dim():
+        mask = mask.unsqueeze(1)
+    mask = mask.transpose(-1, -2) #[batch_size, q1_len, 1]
+    mask = mask.expand_as(weighted_sum).contiguous().float() #[batch_size, q1_len, dim]
+    return weighted_sum * mask #set pad = 0
+
+def replace_masked(tensor, mask, value):
+    mask = mask.unsqueeze(1).transpose(1,2) # [batch_size, max_len, 1]
+    reverse_mask =  1.0 - mask
+    values_to_add = value * reverse_mask
+    return tensor * mask + values_to_add
+
 def get_mask(batch, sequences_lengths, max_len = 30):
     # return mask[batch, len] pad - 0 value - 1
     batch_size = batch.size()[0]
