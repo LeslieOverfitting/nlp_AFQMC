@@ -88,15 +88,12 @@ if __name__ =='__main__':
     args = parse_arguments(sys.argv[1:])
     config = Config()
     print('导入词向量.....')
-    #data_processor = DataProcessor(config)
-   # executor = Executor(config)
+    data_processor = DataProcessor(config)
+    executor = Executor(config)
     print('开始训练.....')
     model_name = args.model_name
-    print(model_name)
-    '''
     config.model_save_path = f'saveModel/{model_name}.pt'
     # 训练模型
     train(config, model_name, data_processor, executor)
     # 预测结果
     inference(config, model_name, data_processor, executor)
-    '''
