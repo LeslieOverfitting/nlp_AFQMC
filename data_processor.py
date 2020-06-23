@@ -26,12 +26,13 @@ class DataProcessor:
         return data_set
 
     def get_emb(self, emb_path):
-        with open(emb_path, 'r', encoding='utf-8') as emb_file:
+        with open(emb_path, 'r', encoding='utf-8', errors='ignore') as emb_file:
             dict_len, emb_dim = emb_file.readline().rstrip().split()
+            #print(emb_file.readline())
             emb_dim = int(emb_dim)
             emb = collections.OrderedDict()
             for line in emb_file.readlines():
-                tokens = line.rstrip().split()
+                tokens = str(line).rstrip().split()
                 if len(tokens) == 301:
                     emb[tokens[0]] = np.asarray(tokens[1:], dtype='float32')
             print(len(emb))

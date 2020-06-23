@@ -15,7 +15,7 @@ class Executor:
 
     def train_model(self, data_loader, model):
         start_time = time.time()
-        optimizer = optim.Adam(model.parameters(), lr=self.config.learn_rate)
+        optimizer = optim.Adam(model.parameters(), lr=self.config.learn_rate, betas=(0.9, 0.999))
         model.train()
         criterion = nn.CrossEntropyLoss()
         total_batch = 0
@@ -71,6 +71,7 @@ class Executor:
         acc = metrics.accuracy_score(labels_all, predicts_all)
         report = metrics.classification_report(labels_all, predicts_all, digits=4)
         confusion = metrics.confusion_matrix(labels_all, predicts_all)
-        return acc, total_loss / len(data_loader), report, confusion
+        f1_score = metrics.f1_score(labels_all, predicts_all, average='macro')
+        return acc, total_loss / len(data_loader), report, confusion, f1_score
 
 
