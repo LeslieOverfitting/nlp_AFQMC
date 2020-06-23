@@ -1,4 +1,5 @@
  
+import sys, argparse, os
 import pandas as pd
 import torch
 import json
@@ -42,17 +43,17 @@ def train(config, model_name, data_processor, executor):
     es = EarlyStopping()
     for i in range(config.epoch_num):
         print('Epoch:  ', i + 1)
-        executor.train_model(train_loader, model)
+        executor.train_model(train_loader, model) #训练模型
         dev_acc, dev_loss, report, confusion, f1_score = executor.evaluate_model(dev_loader, model)
-        print_ans(dev_acc, dev_loss, report, confusion)
-        es(f1_score, model, config.model_save_path)
+        print_ans(dev_acc, dev_loss, report, confusion) #打印结果
+        es(f1_score, model, config.model_save_path) # 早停判断
         if es.early_stop:
           print("Early stopping")
           break
     print('best model')
-    model.load_state_dict(torch.load(config.model_save_path))
-    dev_acc, dev_loss, report, confusion, f1_score = executor.evaluate_model(dev_loader, model)
-    print_ans(dev_acc, dev_loss, report, confusion)
+    model.load_state_dict(torch.load(config.model_save_path)) #载入最优模型
+    dev_acc, dev_loss, report, confusion, f1_score = executor.evaluate_model(dev_loader, model) # 验证集验证
+    print_ans(dev_acc, dev_loss, report, confusion) #打印结果
 
 def inference(config, model_name, data_processor, executor):
     # 加载数据
@@ -77,13 +78,25 @@ def inference(config, model_name, data_processor, executor):
             writer.write(json.dumps(json_d) + '\n')
     print('inference over')
 
+def parse_arguments(arg):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_name', type=str, default="sse", help= 'Choose model to train.')
+    return parser.parse_args()
+
+
 if __name__ =='__main__':
+    args = parse_arguments(sys.argv[1:])
     config = Config()
-    data_processor = DataProcessor(config)
-    executor = Executor(config)
-    model_name = 'sse'
+    print('导入词向量.....')
+    #data_processor = DataProcessor(config)
+   # executor = Executor(config)
+    print('开始训练.....')
+    model_name = args.model_name
+    print(model_name)
+    '''
     config.model_save_path = f'saveModel/{model_name}.pt'
     # 训练模型
-    train(config, data_processor, executor)
+    train(config, model_name, data_processor, executor)
     # 预测结果
     inference(config, model_name, data_processor, executor)
+    '''

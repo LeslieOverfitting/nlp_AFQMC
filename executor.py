@@ -14,7 +14,8 @@ class Executor:
         self.config = config
 
     def train_model(self, data_loader, model):
-        start_time = time.time()
+        # 训练模型
+        start_time = time.time() #获取起始位置
         optimizer = optim.Adam(model.parameters(), lr=self.config.learn_rate, betas=(0.9, 0.999))
         model.train()
         criterion = nn.CrossEntropyLoss()
@@ -24,19 +25,20 @@ class Executor:
             sentences1 = data_batch[0]
             sentences2 = data_batch[1]
             labels = data_batch[2]
-            if torch.cuda.is_available():
+            if torch.cuda.is_available(): # 判断设备信息
                 sentences1 = data_batch[0].to(self.config.device)
                 sentences2 = data_batch[1].to(self.config.device)
                 labels = data_batch[2].to(self.config.device)
             optimizer.zero_grad()
             outputs = model(sentences1, sentences2)
-            loss = criterion(outputs, labels)
+            #计算 loss
+            loss = criterion(outputs, labels) 
             loss.backward()
             optimizer.step()
 
             if total_batch % 100 == 0:
                 true_label = labels.data.cpu().numpy()
-                predict = torch.max(outputs, dim=1)[1].cpu().numpy()
+                predict = torch.max(outputs, dim=1)[1].cpu().numpy() #获取预测结果
                 train_acc = metrics.accuracy_score(true_label, predict)
                 time_diff = get_time_diff(start_time)
                 msg = 'Iter:{0:>6} Train loss: {1:>5.3} Train acc:{2:>6.2%} Time:{3}'
@@ -62,19 +64,20 @@ class Executor:
                 outputs = model(sentences1, sentences2)
                 loss = criterion(outputs, labels)
                 total_loss += loss.item()
-
+                # 将预测结果写入记录
                 predict = torch.max(outputs, dim=1)[1].cpu().numpy()
                 labels = labels.data.cpu().numpy()
                 labels_all = np.append(labels_all, labels)
                 predicts_all = np.append(predicts_all, predict)
-
+        #生成评估结果
         acc = metrics.accuracy_score(labels_all, predicts_all)
         report = metrics.classification_report(labels_all, predicts_all, digits=4)
-        confusion = metrics.confusion_matrix(labels_all, predicts_all)
+        confusion = metrics.confusion_matrix(labels_all, predicts_all) # 混淆矩阵
         f1_score = metrics.f1_score(labels_all, predicts_all, average='macro')
         return acc, total_loss / len(data_loader), report, confusion, f1_score
 
     def inference(self, data_loader, model):
+        # 预测输出
         predicts_all = np.array([], dtype=int)
         model.eval()
         with torch.no_grad():

@@ -22,11 +22,12 @@ class SentenceEncoder(nn.Module):
         )
 
     def forward(self, sequences_batch, sequnces_lengths):
+        # 用于处理 padding token 
         max_len = sequences_batch.shape[1]
-        sorted_batch, sorted_length, _, restoration_idx = sort_by_seq_lens(sequences_batch, sequnces_lengths)
-        packed_batch = nn.utils.rnn.pack_padded_sequence(sorted_batch, sorted_length, batch_first=True)
-        outputs, _ = self._encoder(packed_batch) # hidden = None
-        outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True, total_length=max_len) # [batch_size, max_len, dim]
+        sorted_batch, sorted_length, _, restoration_idx = sort_by_seq_lens(sequences_batch, sequnces_lengths) #长度排序
+        packed_batch = nn.utils.rnn.pack_padded_sequence(sorted_batch, sorted_length, batch_first=True) #压缩
+        outputs, _ = self._encoder(packed_batch) # LSTM
+        outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True, total_length=max_len) #还原 [batch_size, max_len, dim]
         # restore order
-        reorder_outputs = outputs.index_select(0, restoration_idx)
+        reorder_outputs = outputs.index_select(0, restoration_idx) #还原顺序
         return reorder_outputs

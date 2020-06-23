@@ -17,9 +17,7 @@ class ESIM(nn.Module):
         self.hidden_layer = config.hidden_layer
         self.device = config.device
         self.emb = nn.Embedding.from_pretrained(torch.tensor(word_emb))
-        #self.encoder = nn.Embedding(self.n_vocab, self.emb_dim, padding_idx=self.padding_idx)
-        #if self.word_emb is not None:
-        #    self.encoder.weight.data.copy_(self.word_emb)
+        # 编码层
         self.encoder_layer = SentenceEncoder(input_size=self.emb_dim, 
                                              hidden_size=self.hidden_size, 
                                              num_layers=self.hidden_layer, 
@@ -28,13 +26,13 @@ class ESIM(nn.Module):
 
         self.projection = nn.Sequential(nn.Linear(4 * 2 * self.hidden_size, self.hidden_size),
                                         nn.ReLU())
-
+        # 特征组合
         self.composition_layer = SentenceEncoder(input_size=self.hidden_size, 
                                                 hidden_size=self.hidden_size, 
                                                 num_layers=self.hidden_layer, 
                                                 bias=True, 
                                                 dropout=self.dropout)
-        
+        # 预测
         self.predict_fc = nn.Sequential(nn.Dropout(p=self.dropout),
                                         nn.Linear(4 * 2 * self.hidden_size, self.hidden_size),
                                         nn.Tanh(),
@@ -47,7 +45,6 @@ class ESIM(nn.Module):
             sentences1 [batch, max_len]
             sentences2 [batch, max_len]
         """
-        
         # get mask
         sentences1_mask = (sentences1 != self.padding_idx).long().to(self.device) # [batch_size, max_len]
         sentences2_mask = (sentences2 != self.padding_idx).long().to(self.device) # [batch_size, max_len]

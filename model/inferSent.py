@@ -17,11 +17,13 @@ class InferSent(nn.Module):
         self.padding_idx = config.padding_idx
         self.device = config.device
         self.emb = nn.Embedding.from_pretrained(torch.tensor(word_emb))
+        # 编码层
         self.encoder_layer = SentenceEncoder(input_size=self.emb_dim, 
                                              hidden_size=self.hidden_size, 
                                              num_layers=self.hidden_layer, 
                                              bias=True, 
                                              dropout=self.dropout)
+        # 预测
         self.mlp = nn.Sequential(nn.Dropout(p=self.dropout),
                                 nn.Linear(4 * 2 * self.hidden_size, self.hidden_size),
                                 nn.Tanh(),

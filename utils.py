@@ -5,22 +5,22 @@ import torch.nn as nn
 import time
 
 def get_time_diff(start_time):
+    # 获取时间
     end_time = time.time()
     time_diff = end_time - start_time
     return timedelta(seconds=int(round(time_diff)))
 
 def print_ans(acc, loss, report, confusion):
-        msg = "Dev Loss:{0:>5.2}, Dev Acc:{1:>6.2%}"
-        print(msg.format(loss, acc))
-        print("Precision, Recall and F1-Score...")
-        print(report)
-        print("Confusion Matrix...")
-        print(confusion)
+    # 打印结果
+    msg = "Dev Loss:{0:>5.2}, Dev Acc:{1:>6.2%}"
+    print(msg.format(loss, acc))
+    print("Precision, Recall and F1-Score...")
+    print(report)
+    print("Confusion Matrix...")
+    print(confusion)
 
 def init_model_weights(module):
-    """
-    Initialise the weights of the inferSent model.
-    """
+    #  Initialise the weights of model.
     if isinstance(module, nn.Linear):
         nn.init.xavier_uniform_(module.weight.data)
         nn.init.constant_(module.bias.data, 0.0)
@@ -35,7 +35,8 @@ def init_model_weights(module):
                 param.data.fill_(0)
 
 def sort_by_seq_lens(batch, sequences_lengths, descending=True):
-    """
+    """ 
+        对文本序列进行排序
         batch [batch_size, max_seq_len, dim]
         sequences_lengths [batch_size, 1]
     """
@@ -90,13 +91,14 @@ def get_mask(batch, sequences_lengths, max_len = 30):
     return mask
 
 class EarlyStopping:
+    # 早停类
     def __init__(self, patience=5, delta=0.0002):
         self.patience = patience
         self.counter = 0
         self.best_score = None
         self.early_stop = False
         self.delta = delta
-        self.val_score = -np.Inf
+        self.val_score = -np.Inf # 这里我们使用的是 f1_socre 作为评判
 
     def __call__(self, epoch_score, model, model_path):
         score = np.copy(epoch_score)
