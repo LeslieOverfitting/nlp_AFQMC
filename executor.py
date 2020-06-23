@@ -74,4 +74,20 @@ class Executor:
         f1_score = metrics.f1_score(labels_all, predicts_all, average='macro')
         return acc, total_loss / len(data_loader), report, confusion, f1_score
 
+    def inference(self, data_loader, model):
+        predicts_all = np.array([], dtype=int)
+        model.eval()
+        with torch.no_grad():
+            for batch in data_loader:
+                sentences1 = batch[0]
+                sentences2 = batch[1]
+                if torch.cuda.is_available():
+                    sentences1 = batch[0].to(self.config.device)
+                    sentences2 = batch[1].to(self.config.device)
+                outputs = model(sentences1, sentences2)
+                predict = torch.max(outputs, dim=1)[1].cpu().numpy()
+                predicts_all = np.append(predicts_all, predict)
+
+        return predicts_all
+
 
